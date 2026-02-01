@@ -1,8 +1,20 @@
 import { Router } from "express";
-import userRouter from "../modules/user/user.route";
+import authRouter from "../modules/auth/auth.route";
+import categoryRouter from "../modules/categories/category.route";
+import medicineRouter from "../modules/medicines/medicine.route";
+import orderRouter from "../modules/orders/order.route";
+import reviewRouter from "../modules/reviews/review.route";
+import sellerRouter from "../modules/seller/seller.route";
+import adminRouter from "../modules/admin/admin.route";
 
 const routes = Router();
 
-routes.use("/user", userRouter)
+routes.use("/auth", authRouter);
+routes.use("/categories", categoryRouter);
+routes.use("/medicines", medicineRouter);
+routes.use("/orders", orderRouter);
+routes.use("/reviews", reviewRouter);
+routes.use("/seller", sellerRouter);
+routes.use("/admin", adminRouter);
 
 export default routes;

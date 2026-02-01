@@ -642,10 +642,6 @@ export type IntFieldUpdateOperationsInput = {
   divide?: number
 }
 
-export type NullableStringFieldUpdateOperationsInput = {
-  set?: string | null
-}
-
 export type MedicineCreateNestedOneWithoutOrderItemsInput = {
   create?: Prisma.XOR<Prisma.MedicineCreateWithoutOrderItemsInput, Prisma.MedicineUncheckedCreateWithoutOrderItemsInput>
   connectOrCreate?: Prisma.MedicineCreateOrConnectWithoutOrderItemsInput
