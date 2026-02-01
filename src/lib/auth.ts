@@ -12,23 +12,52 @@ const normalizeRole = (role: unknown): UserRole => {
 };
 
 export const auth = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:4000/api/auth",
-  secret: process.env.BETTER_AUTH_SECRET || "BG34KFxWOEkPAlmBqgBmAKVCUwilRTyt6",
+  // IMPORTANT: baseURL should be your server origin (not including /api/auth)
+  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:4000",
+  secret: process.env.BETTER_AUTH_SECRET || "CHANGE_ME",
 
-  // Prisma 7: if you use custom Prisma client output, import PrismaClient from that output.
-  // We already do that inside src/lib/prisma.ts.
   database: prismaAdapter(prisma as any, {
     provider: "postgresql",
   }),
 
+  emailVerification: {
+    sendOnSignUp: true,
+    sendOnSignIn: true,
+    sendVerificationEmail: async ({ user, url }) => {
+      // we'll implement Gmail SMTP below
+      void sendEmail({
+        to: user.email,
+        subject: "Verify your email",
+        html: `<p>Click to verify your email:</p><p><a href="${url}">${url}</a></p>`,
+      });
+    },
+  },
+
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true, // ✅ only affects email/password sign-in :contentReference[oaicite:2]{index=2}
+  },
+
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    },
   },
 
   user: {
     additionalFields: {
-      role: { type: "string", required: true, input: true },
-      isBanned: { type: "boolean", required: false, input: false, default: false },
+      role: {
+        type: "string",
+        required: true,
+        input: true,
+      },
+      isBanned: {
+        type: "boolean",
+        required: false,
+        input: false,
+        default: false,
+      },
     },
   },
 
@@ -41,9 +70,13 @@ export const auth = betterAuth({
 
           const desiredRole = normalizeRole((user as any).role);
 
-          // Only the seeded admin email can become ADMIN.
+          // Do not allow registering ADMIN unless it's the seeded admin email
           const role: UserRole =
-            adminEmail && incomingEmail === adminEmail ? "ADMIN" : desiredRole === "SELLER" ? "SELLER" : "CUSTOMER";
+            adminEmail && incomingEmail === adminEmail
+              ? "ADMIN"
+              : desiredRole === "SELLER"
+                ? "SELLER"
+                : "CUSTOMER";
 
           return {
             data: {
@@ -56,4 +89,6 @@ export const auth = betterAuth({
       },
     },
   },
+
+
 });

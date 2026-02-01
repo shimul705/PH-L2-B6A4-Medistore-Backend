@@ -13,6 +13,5 @@ export const AdminService = {
   getAllMedicines: () =>
     prisma.medicine.findMany({ include: { category: true, seller: true }, orderBy: { createdAt: "desc" } }),
 
-  getAllOrders: () =>
-    prisma.order.findMany({ include: { items: { include: { medicine: true } }, customer: true }, orderBy: { createdAt: "desc" } }),
+  getAllOrders: () => prisma.order.findMany({ include: { customer: true }, orderBy: { createdAt: "desc" } }),
 };

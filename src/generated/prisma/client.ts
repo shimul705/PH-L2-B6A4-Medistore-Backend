@@ -75,11 +75,6 @@ export type Medicine = Prisma.MedicineModel
  */
 export type Order = Prisma.OrderModel
 /**
- * Model OrderItem
- * 
- */
-export type OrderItem = Prisma.OrderItemModel
-/**
  * Model Review
  * 
  */

@@ -1,7 +1,8 @@
-import { Prisma } from "../../generated/prisma/client";
+// import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
 import { ApiError } from "../../utils/ApiError";
 import type { AppUser } from "../../middlewares/authGuard";
+import { Prisma } from "../../generated/prisma/client";
 
 export const MedicineService = {
   getAll: async (query: any) => {
@@ -16,11 +17,11 @@ export const MedicineService = {
         isActive: true,
         ...(search
           ? {
-              OR: [
-                { name: { contains: search, mode: "insensitive" } },
-                { description: { contains: search, mode: "insensitive" } },
-              ],
-            }
+            OR: [
+              { name: { contains: search, mode: "insensitive" } },
+              { description: { contains: search, mode: "insensitive" } },
+            ],
+          }
           : {}),
         ...(categoryId ? { categoryId } : {}),
         ...(manufacturer ? { manufacturer: { contains: manufacturer, mode: "insensitive" } } : {}),

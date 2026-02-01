@@ -4,16 +4,27 @@ import { ApiError } from "../../utils/ApiError";
 import type { AppUser } from "../../middlewares/authGuard";
 
 type CreateOrderItem = { medicineId: string; quantity: number };
+type StoredOrderItem = {
+  medicineId: string;
+  sellerId: string;
+  quantity: number;
+  unitPrice: string; // Decimal as string for JSON safety
+};
 
 export const OrderService = {
   create: async (user: AppUser, payload: any) => {
     if (user.role !== "CUSTOMER") throw new ApiError(403, "Only customers can place orders");
 
     const items: CreateOrderItem[] = payload.items;
+    if (!Array.isArray(items) || items.length === 0) throw new ApiError(400, "Items are required");
+
     const medicineIds = items.map((i) => i.medicineId);
 
     return prisma.$transaction(async (tx) => {
-      const medicines = await tx.medicine.findMany({ where: { id: { in: medicineIds }, isActive: true } });
+      const medicines = await tx.medicine.findMany({
+        where: { id: { in: medicineIds }, isActive: true },
+        select: { id: true, name: true, price: true, stock: true, sellerId: true },
+      });
 
       if (medicines.length !== medicineIds.length) {
         throw new ApiError(400, "One or more medicines are invalid");
@@ -28,7 +39,17 @@ export const OrderService = {
         total = total.add(med.price.mul(it.quantity));
       }
 
-      // Create order + items
+      const storedItems: StoredOrderItem[] = items.map((it) => {
+        const med = medicines.find((m) => m.id === it.medicineId)!;
+        return {
+          medicineId: med.id,
+          sellerId: med.sellerId,
+          quantity: it.quantity,
+          unitPrice: med.price.toString(),
+        };
+      });
+
+      // Create order
       const order = await tx.order.create({
         data: {
           customerId: user.id,
@@ -39,19 +60,9 @@ export const OrderService = {
           shippingArea: payload.shippingArea,
           notes: payload.notes,
           total,
-          items: {
-            create: items.map((it) => {
-              const med = medicines.find((m) => m.id === it.medicineId)!;
-              return {
-                medicineId: med.id,
-                sellerId: med.sellerId,
-                quantity: it.quantity,
-                unitPrice: med.price,
-              };
-            }),
-          },
+          items: storedItems as any,
         },
-        include: { items: true },
+        include: { customer: true },
       });
 
       // Decrement stock
@@ -67,39 +78,39 @@ export const OrderService = {
   },
 
   getMyOrders: async (user: AppUser) => {
-    if (user.role === "CUSTOMER") {
-      return prisma.order.findMany({
-        where: { customerId: user.id },
-        include: { items: { include: { medicine: true } } },
-        orderBy: { createdAt: "desc" },
-      });
-    }
-
-    if (user.role === "SELLER") {
-      return prisma.order.findMany({
-        where: { items: { some: { sellerId: user.id } } },
-        include: { items: { where: { sellerId: user.id }, include: { medicine: true } }, customer: true },
-        orderBy: { createdAt: "desc" },
-      });
-    }
-
-    // ADMIN
-    return prisma.order.findMany({
-      include: { items: { include: { medicine: true } }, customer: true },
+    const orders = await prisma.order.findMany({
+      where:
+        user.role === "CUSTOMER"
+          ? { customerId: user.id }
+          : undefined,
+      include: { customer: true },
       orderBy: { createdAt: "desc" },
     });
+
+    if (user.role === "SELLER") {
+      // Prisma can't efficiently filter JSON for nested sellerId in a portable way,
+      // so we filter in memory.
+      return orders.filter((o) => {
+        const items = (o.items as any[]) || [];
+        return items.some((i) => i?.sellerId === user.id);
+      });
+    }
+
+    return orders;
   },
 
   getById: async (user: AppUser, id: string) => {
     const order = await prisma.order.findUnique({
       where: { id },
-      include: { items: { include: { medicine: true } }, customer: true },
+      include: { customer: true },
     });
     if (!order) throw new ApiError(404, "Order not found");
 
     if (user.role === "CUSTOMER" && order.customerId !== user.id) throw new ApiError(403, "Forbidden");
+
     if (user.role === "SELLER") {
-      const owns = order.items.some((i) => i.sellerId === user.id);
+      const items = (order.items as any[]) || [];
+      const owns = items.some((i) => i?.sellerId === user.id);
       if (!owns) throw new ApiError(403, "Forbidden");
     }
 
@@ -107,14 +118,23 @@ export const OrderService = {
   },
 
   updateStatus: async (user: AppUser, id: string, status: any) => {
-    const order = await prisma.order.findUnique({ where: { id }, include: { items: true } });
+    const order = await prisma.order.findUnique({ where: { id } });
     if (!order) throw new ApiError(404, "Order not found");
 
     if (user.role === "CUSTOMER") throw new ApiError(403, "Customers cannot update order status");
-    if (user.role === "SELLER" && !order.items.some((i) => i.sellerId === user.id)) {
-      throw new ApiError(403, "Forbidden");
+
+    if (user.role === "SELLER") {
+      const items = (order.items as any[]) || [];
+      if (!items.some((i) => i?.sellerId === user.id)) throw new ApiError(403, "Forbidden");
     }
 
-    return prisma.order.update({ where: { id }, data: { status } });
+    // Prevent invalid transitions
+    if (order.status === "DELIVERED") throw new ApiError(400, "Delivered order cannot be updated");
+    if (order.status === "CANCELLED") throw new ApiError(400, "Cancelled order cannot be updated");
+
+    return prisma.order.update({
+      where: { id },
+      data: { status },
+    });
   },
 };

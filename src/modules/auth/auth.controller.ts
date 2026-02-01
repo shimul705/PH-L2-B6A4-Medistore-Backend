@@ -39,6 +39,21 @@ export const AuthController = {
     res.send(text ? JSON.parse(text) : null);
   }),
 
+
+  google: asyncHandler(async (_req: Request, res: Response) => {
+    // Starts Google OAuth flow (redirect response)
+    const response = await auth.api.signInSocial({
+      body: { provider: "google" },
+      asResponse: true,
+    });
+
+    const text = await response.text();
+    res.status(response.status);
+    response.headers.forEach((v, k) => res.setHeader(k, v));
+    // Most of the time this will be a redirect response, so body may be empty.
+    res.send(text ? JSON.parse(text) : null);
+  }),
+
   me: asyncHandler(async (req: Request, res: Response) => {
     const session = await auth.api.getSession({
       headers: fromNodeHeaders(req.headers),
