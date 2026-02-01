@@ -12,22 +12,26 @@ export const MedicineService = {
     const minPrice = query.minPrice ? Number(query.minPrice) : undefined;
     const maxPrice = query.maxPrice ? Number(query.maxPrice) : undefined;
 
+    // With `exactOptionalPropertyTypes: true`, we must omit optional filter keys
+    // rather than set them to `undefined`.
+    const priceFilter: { gte?: number; lte?: number } = {};
+    if (minPrice !== undefined) priceFilter.gte = minPrice;
+    if (maxPrice !== undefined) priceFilter.lte = maxPrice;
+
     return prisma.medicine.findMany({
       where: {
         isActive: true,
         ...(search
           ? {
-            OR: [
-              { name: { contains: search, mode: "insensitive" } },
-              { description: { contains: search, mode: "insensitive" } },
-            ],
-          }
+              OR: [
+                { name: { contains: search, mode: "insensitive" } },
+                { description: { contains: search, mode: "insensitive" } },
+              ],
+            }
           : {}),
         ...(categoryId ? { categoryId } : {}),
         ...(manufacturer ? { manufacturer: { contains: manufacturer, mode: "insensitive" } } : {}),
-        ...(minPrice !== undefined || maxPrice !== undefined
-          ? { price: { gte: minPrice ?? undefined, lte: maxPrice ?? undefined } }
-          : {}),
+        ...(Object.keys(priceFilter).length ? { price: priceFilter } : {}),
       },
       include: { category: true, seller: { select: { id: true, name: true, email: true } } },
       orderBy: { createdAt: "desc" },

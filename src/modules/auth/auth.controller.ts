@@ -9,10 +9,12 @@ export const AuthController = {
 
     const data = await auth.api.signUpEmail({
       body: {
+        // `role` is required by our Better Auth additionalFields config.
+        // Validation should ensure it exists and is one of the allowed roles.
         name,
         email,
         password,
-        ...(role ? { role } : {}),
+        role,
       },
       // Return a Response so cookies/headers (if any) are preserved
       asResponse: true,

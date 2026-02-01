@@ -1,13 +1,12 @@
 import type { Request, Response } from "express";
 import { asyncHandler } from "../../middlewares/asyncHandler";
 import { ReviewService } from "./review.service";
+import { ApiError } from "../../utils/ApiError";
 
 export const ReviewController = {
   getForMedicine: asyncHandler(async (req: Request, res: Response) => {
     const medicineId = String(req.query.medicineId || "");
-    if (!medicineId) {
-      return res.status(400).json({ success: false, message: "medicineId query param is required" });
-    }
+    if (!medicineId) throw new ApiError(400, "medicineId query param is required");
     const data = await ReviewService.getForMedicine(medicineId);
     res.json({ success: true, data });
   }),

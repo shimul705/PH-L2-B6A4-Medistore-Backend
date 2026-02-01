@@ -14,12 +14,12 @@ export const OrderController = {
   }),
 
   getById: asyncHandler(async (req: Request, res: Response) => {
-    const data = await OrderService.getById(req.user!, req.params.id);
+    const data = await OrderService.getById(req.user!, req.params.id as string);
     res.json({ success: true, data });
   }),
 
   updateStatus: asyncHandler(async (req: Request, res: Response) => {
-    const data = await OrderService.updateStatus(req.user!, req.params.id, req.body.status);
+    const data = await OrderService.updateStatus(req.user!, req.params.id as string, req.body.status);
     res.json({ success: true, data });
   }),
 };

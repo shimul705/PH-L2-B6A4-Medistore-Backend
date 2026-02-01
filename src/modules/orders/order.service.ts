@@ -78,14 +78,17 @@ export const OrderService = {
   },
 
   getMyOrders: async (user: AppUser) => {
-    const orders = await prisma.order.findMany({
-      where:
-        user.role === "CUSTOMER"
-          ? { customerId: user.id }
-          : undefined,
+    // With `exactOptionalPropertyTypes: true`, omit `where` instead of setting it to `undefined`.
+    const args: Prisma.OrderFindManyArgs = {
       include: { customer: true },
       orderBy: { createdAt: "desc" },
-    });
+    };
+
+    if (user.role === "CUSTOMER") {
+      args.where = { customerId: user.id };
+    }
+
+    const orders = await prisma.order.findMany(args);
 
     if (user.role === "SELLER") {
       // Prisma can't efficiently filter JSON for nested sellerId in a portable way,

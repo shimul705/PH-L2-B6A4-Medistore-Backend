@@ -14,12 +14,18 @@ export const ReviewService = {
   create: async (user: AppUser, payload: any) => {
     if (user.role !== "CUSTOMER") throw new ApiError(403, "Only customers can review");
 
-    const purchased = await prisma.orderItem.findFirst({
-      where: {
-        medicineId: payload.medicineId,
-        order: { customerId: user.id },
-      },
+    // We keep `Order.items` as JSON (no separate OrderItem table). To verify purchase,
+    // we load the customer's orders and check for the medicineId in stored items.
+    const orders = await prisma.order.findMany({
+      where: { customerId: user.id },
+      select: { items: true },
     });
+
+    const purchased = orders.some((o) => {
+      const items = Array.isArray(o.items) ? (o.items as any[]) : [];
+      return items.some((i) => i?.medicineId === payload.medicineId);
+    });
+
     if (!purchased) throw new ApiError(400, "You can only review medicines you ordered");
 
     try {

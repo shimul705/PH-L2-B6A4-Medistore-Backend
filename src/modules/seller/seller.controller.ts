@@ -9,7 +9,7 @@ export const SellerController = {
   }),
 
   updateOrderStatus: asyncHandler(async (req: Request, res: Response) => {
-    const data = await OrderService.updateStatus(req.user!, req.params.id, req.body.status);
+    const data = await OrderService.updateStatus(req.user!, req.params.id as string, req.body.status);
     res.json({ success: true, data });
   }),
 };

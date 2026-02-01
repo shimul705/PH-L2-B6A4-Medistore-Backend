@@ -6,7 +6,8 @@ export const AuthValidation = {
       name: z.string().min(2),
       email: z.string().email(),
       password: z.string().min(8),
-      role: z.enum(["CUSTOMER", "SELLER"]).optional(),
+      // Assignment: user chooses role at registration (except ADMIN which is seeded)
+      role: z.enum(["CUSTOMER", "SELLER"]),
     }),
   }),
 
