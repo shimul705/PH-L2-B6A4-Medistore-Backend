@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma";
+import { sendEmail } from "./mailer";
 
 type UserRole = "CUSTOMER" | "SELLER" | "ADMIN";
 
