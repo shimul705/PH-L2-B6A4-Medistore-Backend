@@ -1,12 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -38,10 +31,9 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  medicines  Medicine[]  @relation("SellerMedicines")
-  orders     Order[]     @relation("CustomerOrders")
-  reviews    Review[]
-  orderItems OrderItem[]
+  medicines Medicine[] @relation("SellerMedicines")
+  orders    Order[]    @relation("CustomerOrders")
+  reviews   Review[]
 }
 
 model Category {
@@ -54,22 +46,22 @@ model Category {
 }
 
 model Medicine {
-  id           String  @id @default(cuid())
+  id           String   @id @default(cuid())
   name         String
   description  String
-  price        Decimal
-  stock        Int     @default(0)
+  price        Decimal  @db.Numeric(10,2)
+  stock        Int      @default(0)
   manufacturer String
   imageUrl     String?
-  isActive     Boolean @default(true)
+  isActive     Boolean  @default(true)
 
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
 
   sellerId String
-  seller   User   @relation("SellerMedicines", fields: [sellerId], references: [id])
+  seller   User @relation("SellerMedicines", fields: [sellerId], references: [id])
 
-  reviews    Review[]
+  reviews   Review[]
   orderItems OrderItem[]
 
   createdAt DateTime @default(now())
@@ -91,12 +83,12 @@ model Order {
   shippingArea    String?
   notes           String?
 
-  total Decimal
+  total           Decimal     @db.Numeric(10,2)
 
   customerId String
-  customer   User   @relation("CustomerOrders", fields: [customerId], references: [id])
+  customer   User @relation("CustomerOrders", fields: [customerId], references: [id])
 
-  items OrderItem[]
+  items      OrderItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -106,31 +98,31 @@ model Order {
 }
 
 model OrderItem {
-  id      String @id @default(cuid())
-  orderId String
-  order   Order  @relation(fields: [orderId], references: [id])
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
 
   medicineId String
   medicine   Medicine @relation(fields: [medicineId], references: [id])
 
-  sellerId String
-  seller   User   @relation(fields: [sellerId], references: [id])
+  sellerId  String
+  seller    User @relation(fields: [sellerId], references: [id])
 
   quantity  Int
-  unitPrice Decimal
+  unitPrice Decimal @db.Numeric(10,2)
 
   @@index([sellerId])
   @@index([orderId])
 }
 
 model Review {
-  id        String   @id @default(cuid())
-  rating    Int
-  comment   String?
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
 
   customerId String
-  customer   User   @relation(fields: [customerId], references: [id])
+  customer   User     @relation(fields: [customerId], references: [id])
 
   medicineId String
   medicine   Medicine @relation(fields: [medicineId], references: [id])
