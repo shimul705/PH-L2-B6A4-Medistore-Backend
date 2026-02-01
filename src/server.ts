@@ -1,24 +1,22 @@
-import app from "./app"
-import { prisma } from "./lib/prisma"
+import app from "./app";
+import { prisma } from "./lib/prisma";
 
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 
-async function main() {
+// User try catch for async errors in the future
+async function server() {
     try {
-        await prisma.$connect();
-        console.log('Database connected');
+        await prisma.$disconnect();
 
-        app.listen(port, () => {
-            console.log(`Server running on http://localhost:${port}`);
-        })
-
+        app.listen(PORT, () => {
+            console.log(`Server is running on http://localhost:${PORT}`);
+        });
     } catch (error) {
-        console.error('Database connection error:', error);
+        console.log(error);
         await prisma.$disconnect();
         process.exit(1);
-
     }
 
 }
 
-main();
+server();
