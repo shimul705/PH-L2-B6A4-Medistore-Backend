@@ -9,7 +9,7 @@ export const MedicineController = {
   }),
 
   getById: asyncHandler(async (req: Request, res: Response) => {
-    const data = await MedicineService.getById(req.params.id);
+    const data = await MedicineService.getById(req.params.id as string);
     res.json({ success: true, data });
   }),
 
@@ -19,12 +19,12 @@ export const MedicineController = {
   }),
 
   update: asyncHandler(async (req: Request, res: Response) => {
-    const data = await MedicineService.update(req.user!, req.params.id, req.body);
+    const data = await MedicineService.update(req.user!, req.params.id as string, req.body);
     res.json({ success: true, data });
   }),
 
   remove: asyncHandler(async (req: Request, res: Response) => {
-    await MedicineService.remove(req.user!, req.params.id);
+    await MedicineService.remove(req.user!, req.params.id as string);
     res.status(204).send();
   }),
 };

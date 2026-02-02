@@ -14,7 +14,7 @@ router.get("/:id", MedicineController.getById);
 router.post(
   "/",
   requireAuth,
-  requireRole("SELLER", "ADMIN"),
+  requireRole("SELLER"),
   validateRequest(MedicineValidation.create),
   MedicineController.create
 );
