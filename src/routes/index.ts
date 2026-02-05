@@ -6,6 +6,7 @@ import orderRouter from "../modules/orders/order.route";
 import reviewRouter from "../modules/reviews/review.route";
 import sellerRouter from "../modules/seller/seller.route";
 import adminRouter from "../modules/admin/admin.route";
+import userRouter from "../modules/users/user.route";
 
 const routes = Router();
 
@@ -16,5 +17,6 @@ routes.use("/orders", orderRouter);
 routes.use("/reviews", reviewRouter);
 routes.use("/seller", sellerRouter);
 routes.use("/admin", adminRouter);
+routes.use("/users", userRouter);
 
 export default routes;

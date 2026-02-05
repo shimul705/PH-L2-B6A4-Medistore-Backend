@@ -41,6 +41,19 @@ export const AuthController = {
     res.send(text ? JSON.parse(text) : null);
   }),
 
+  logout: asyncHandler(async (req: Request, res: Response) => {
+    // End the current session (if any) and clear cookies
+    const response = await auth.api.signOut({
+      headers: fromNodeHeaders(req.headers),
+      asResponse: true,
+    } as any);
+
+    const text = await response.text();
+    res.status(response.status);
+    response.headers.forEach((v, k) => res.setHeader(k, v));
+    res.send(text ? JSON.parse(text) : null);
+  }),
+
 
   google: asyncHandler(async (_req: Request, res: Response) => {
     // Starts Google OAuth flow (redirect response)
