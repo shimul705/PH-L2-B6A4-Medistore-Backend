@@ -21,7 +21,9 @@ router.patch(
 
 router.delete("/:id", requireAuth, requireRole("CUSTOMER"), AddressController.remove);
 
-router.patch(
+// Frontend triggers default selection with POST.
+// Keep PATCH as well (RESTful) for compatibility.
+router.post(
   "/:id/default",
   requireAuth,
   requireRole("CUSTOMER"),
@@ -29,8 +31,7 @@ router.patch(
   AddressController.setDefault
 );
 
-// Some clients send PUT instead of PATCH for setting default
-router.put(
+router.patch(
   "/:id/default",
   requireAuth,
   requireRole("CUSTOMER"),

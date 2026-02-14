@@ -38,11 +38,7 @@ export const ReviewService = {
 
     const prefix =
       order.status === "DELIVERED" ? "I received my order, " : "My order is canceled, ";
-    const rawText = String(
-      payload.comment ?? payload.review ?? payload.reviewText ?? payload.text ?? ""
-    ).trim();
-    if (!rawText) throw new ApiError(400, "Review comment is required");
-    const comment = `${prefix}${rawText}`.trim();
+    const comment = `${prefix}${String(payload.comment || "").trim()}`.trim();
 
     // Create review per medicine in this order (skip already reviewed)
     const created: any[] = [];
