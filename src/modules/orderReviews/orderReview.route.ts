@@ -1,23 +1,34 @@
 import { Router } from "express";
-import { ReviewController } from "../reviews/review.controller";
+import { z } from "zod";
 import { requireAuth, requireRole } from "../../middlewares/authGuard";
 import { validateRequest } from "../../middlewares/validateRequest";
-import { ReviewValidation } from "../reviews/review.validation";
+import { OrderReviewController } from "./orderReview.controller";
 
 const router = Router();
 
-// Aliases for frontend compatibility
-router.get("/feed", ReviewController.getFeed);
-router.get("/", ReviewController.getForMedicine);
+// Order reviews shown on homepage (latest reviews)
+router.get("/", OrderReviewController.list);
 
+// Backward-compatible alias
+router.get("/feed", OrderReviewController.list);
+
+// Customer: get my review for an order
+router.get("/order/:orderId", requireAuth, requireRole("CUSTOMER"), OrderReviewController.myForOrder);
+
+// Customer: create review for an order
 router.post(
   "/order/:orderId",
   requireAuth,
   requireRole("CUSTOMER"),
-  validateRequest(ReviewValidation.createFromOrder),
-  ReviewController.createFromOrder
+  validateRequest(
+    z.object({
+      body: z.object({
+        // Frontend uses { text }
+        text: z.string().min(1, "Review text is required"),
+      }),
+    })
+  ),
+  OrderReviewController.create
 );
-
-router.post("/", requireAuth, requireRole("CUSTOMER"), validateRequest(ReviewValidation.create), ReviewController.create);
 
 export default router;

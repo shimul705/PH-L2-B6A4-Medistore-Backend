@@ -8,7 +8,6 @@ import sellerRouter from "../modules/seller/seller.route";
 import adminRouter from "../modules/admin/admin.route";
 import userRouter from "../modules/users/user.route";
 import addressRouter from "../modules/addresses/address.route";
-import orderReviewRouter from "../modules/orderReviews/orderReview.route";
 
 const routes = Router();
 
@@ -21,6 +20,5 @@ routes.use("/seller", sellerRouter);
 routes.use("/admin", adminRouter);
 routes.use("/users", userRouter);
 routes.use("/addresses", addressRouter);
-routes.use("/order-reviews", orderReviewRouter);
 
 export default routes;
