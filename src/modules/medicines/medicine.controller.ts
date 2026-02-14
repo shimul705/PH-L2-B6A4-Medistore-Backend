@@ -8,6 +8,11 @@ export const MedicineController = {
     res.json({ success: true, data });
   }),
 
+  getMine: asyncHandler(async (req: Request, res: Response) => {
+    const data = await MedicineService.getMine(req.user!);
+    res.json({ success: true, data });
+  }),
+
   getById: asyncHandler(async (req: Request, res: Response) => {
     const data = await MedicineService.getById(req.params.id as string);
     res.json({ success: true, data });

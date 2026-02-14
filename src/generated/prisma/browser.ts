@@ -57,3 +57,8 @@ export type Order = Prisma.OrderModel
  * 
  */
 export type Review = Prisma.ReviewModel
+/**
+ * Model Address
+ * 
+ */
+export type Address = Prisma.AddressModel

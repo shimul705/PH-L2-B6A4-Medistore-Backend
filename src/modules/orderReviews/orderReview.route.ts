@@ -1,13 +1,15 @@
 import { Router } from "express";
-import { ReviewController } from "./review.controller";
+import { ReviewController } from "../reviews/review.controller";
 import { requireAuth, requireRole } from "../../middlewares/authGuard";
 import { validateRequest } from "../../middlewares/validateRequest";
-import { ReviewValidation } from "./review.validation";
+import { ReviewValidation } from "../reviews/review.validation";
 
 const router = Router();
 
+// Aliases for frontend compatibility
 router.get("/feed", ReviewController.getFeed);
 router.get("/", ReviewController.getForMedicine);
+
 router.post(
   "/order/:orderId",
   requireAuth,
@@ -16,12 +18,6 @@ router.post(
   ReviewController.createFromOrder
 );
 
-router.post(
-  "/",
-  requireAuth,
-  requireRole("CUSTOMER"),
-  validateRequest(ReviewValidation.create),
-  ReviewController.create
-);
+router.post("/", requireAuth, requireRole("CUSTOMER"), validateRequest(ReviewValidation.create), ReviewController.create);
 
 export default router;

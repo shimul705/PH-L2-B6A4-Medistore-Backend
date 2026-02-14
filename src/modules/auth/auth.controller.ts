@@ -2,6 +2,8 @@ import type { Request, Response } from "express";
 import { fromNodeHeaders } from "better-auth/node";
 import { auth } from "../../lib/auth";
 import { asyncHandler } from "../../middlewares/asyncHandler";
+import { prisma } from "../../lib/prisma";
+import { ApiError } from "../../utils/ApiError";
 
 export const AuthController = {
   register: asyncHandler(async (req: Request, res: Response) => {
@@ -30,6 +32,13 @@ export const AuthController = {
   login: asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
+    const u = await prisma.user.findUnique({ where: { email } });
+    if (u?.isBanned) throw new ApiError(403, "Your account is banned");
+
+    // Prevent banned users from creating a new session
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (user?.isBanned) throw new ApiError(403, "Your account is banned");
+
     const response = await auth.api.signInEmail({
       body: { email, password },
       asResponse: true,
@@ -55,12 +64,21 @@ export const AuthController = {
   }),
 
 
-  google: asyncHandler(async (_req: Request, res: Response) => {
-    // Starts Google OAuth flow (redirect response)
+  google: asyncHandler(async (req: Request, res: Response) => {
+    // Starts Google OAuth flow.
+    // If callbackURL isn't provided, Better Auth may fallback to the backend baseURL
+    // which would send the user to http://localhost:4000 after consent.
+    // We support callbackURL as a query param so the frontend can control where the
+    // user lands after OAuth.
+    const callbackURL = typeof req.query.callbackURL === "string" ? req.query.callbackURL : undefined;
+
     const response = await auth.api.signInSocial({
-      body: { provider: "google" },
+      body: {
+        provider: "google",
+        ...(callbackURL ? { callbackURL } : {}),
+      },
       asResponse: true,
-    });
+    } as any);
 
     const text = await response.text();
     res.status(response.status);

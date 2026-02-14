@@ -11,6 +11,19 @@ export const ReviewController = {
     res.json({ success: true, data });
   }),
 
+
+  getFeed: asyncHandler(async (req: Request, res: Response) => {
+    const limit = Number(req.query.limit || 10);
+    const data = await ReviewService.getFeed(Number.isFinite(limit) ? limit : 10);
+    res.json({ success: true, data });
+  }),
+
+  createFromOrder: asyncHandler(async (req: Request, res: Response) => {
+    const orderId = String(req.params.orderId);
+    const data = await ReviewService.createFromOrder(req.user!, orderId, req.body);
+    res.status(201).json({ success: true, data });
+  }),
+
   create: asyncHandler(async (req: Request, res: Response) => {
     const data = await ReviewService.create(req.user!, req.body);
     res.status(201).json({ success: true, data });

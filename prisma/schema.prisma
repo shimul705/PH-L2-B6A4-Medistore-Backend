@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -46,6 +45,7 @@ model User {
   medicines  Medicine[]  @relation("SellerMedicines")
   orders     Order[]     @relation("CustomerOrders")
   reviews    Review[]
+  addresses Address[]
   @@map("user")
 }
 
@@ -184,4 +184,24 @@ model Review {
 
   @@unique([customerId, medicineId])
   @@index([medicineId])
+}
+
+model Address {
+  id        String   @id @default(cuid())
+  type      String   @default("Home")
+  fullName  String
+  phone     String
+  address   String
+  city      String
+  state     String
+  zip       String
+  isDefault Boolean  @default(false)
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("address")
 }

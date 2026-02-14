@@ -5,6 +5,15 @@ import type { AppUser } from "../../middlewares/authGuard";
 import { Prisma } from "../../generated/prisma/client";
 
 export const MedicineService = {
+  getMine: async (user: AppUser) => {
+    // Seller sees own inventory (active + inactive). Admin can see all.
+    const where = user.role === "SELLER" ? { sellerId: user.id } : {};
+    return prisma.medicine.findMany({
+      where,
+      include: { category: true, seller: { select: { id: true, name: true, email: true } } },
+      orderBy: { createdAt: "desc" },
+    });
+  },
   getAll: async (query: any) => {
     const search = query.search ? String(query.search) : undefined;
     const categoryId = query.categoryId ? String(query.categoryId) : undefined;
@@ -49,6 +58,8 @@ export const MedicineService = {
   },
 
   create: async (user: AppUser, payload: any) => {
+    const sellerId = user.role === "ADMIN" ? payload.sellerId : user.id;
+    if (!sellerId) throw new ApiError(400, "sellerId is required");
     return prisma.medicine.create({
       data: {
         name: payload.name,
@@ -58,7 +69,7 @@ export const MedicineService = {
         manufacturer: payload.manufacturer,
         imageUrl: payload.imageUrl,
         categoryId: payload.categoryId,
-        sellerId: user.id,
+        sellerId,
       },
     });
   },

@@ -8,4 +8,20 @@ export const ReviewValidation = {
       comment: z.string().optional(),
     }),
   }),
+
+  createFromOrder: z.object({
+    params: z.object({
+      orderId: z.string().min(5),
+    }),
+    body: z.object({
+      rating: z.coerce.number().int().min(1).max(5).optional(),
+      // Frontend may send `comment` or `review` or `reviewText`
+      comment: z.string().optional(),
+      review: z.string().optional(),
+      reviewText: z.string().optional(),
+    }).refine((b) => Boolean((b.comment || b.review || b.reviewText) && String(b.comment || b.review || b.reviewText).trim().length > 0), {
+      message: "Review comment is required",
+    }),
+
+  }),
 };

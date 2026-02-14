@@ -8,13 +8,15 @@ const router = Router();
 
 // Public
 router.get("/", MedicineController.getAll);
+// Seller/Admin inventory list
+router.get("/mine", requireAuth, requireRole("SELLER", "ADMIN"), MedicineController.getMine);
 router.get("/:id", MedicineController.getById);
 
 // Seller inventory (also allow Admin)
 router.post(
   "/",
   requireAuth,
-  requireRole("SELLER"),
+  requireRole("SELLER", "ADMIN"),
   validateRequest(MedicineValidation.create),
   MedicineController.create
 );
