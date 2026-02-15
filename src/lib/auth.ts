@@ -25,14 +25,20 @@ export const auth = betterAuth({
     sendOnSignUp: true,
     sendOnSignIn: true,
     sendVerificationEmail: async ({ user, url }) => {
-      // we'll implement Gmail SMTP below
+
+      const verifyUrl = `${url}&callbackURL=${process.env.PROD_APP_URL}`;
+
       void sendEmail({
         to: user.email,
         subject: "Verify your email",
-        html: `<p>Click to verify your email:</p><p><a href="${url}">${url}</a></p>`,
+        html: `
+        <p>Click to verify your email:</p>
+        <p><a href="${verifyUrl}">${verifyUrl}</a></p>
+      `,
       });
     },
   },
+
 
   emailAndPassword: {
     enabled: true,
