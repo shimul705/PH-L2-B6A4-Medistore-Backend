@@ -36,7 +36,7 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: true, // ✅ only affects email/password sign-in :contentReference[oaicite:2]{index=2}
+    requireEmailVerification: true, // ✅ only affects email/password sign-in 
   },
 
   socialProviders: {
@@ -90,6 +90,29 @@ export const auth = betterAuth({
       },
     },
   },
+
+  // Session/cookie settings for production (Vercel) compatibility
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60, // 5 minutes
+    },
+  },
+
+  advanced: {
+    cookiePrefix: "better-auth",
+
+    useSecureCookies: process.env.NODE_ENV === "production",
+
+    defaultCookieAttributes: {
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+    },
+
+    disableCSRFCheck: true,
+  },
+
 
 
 });

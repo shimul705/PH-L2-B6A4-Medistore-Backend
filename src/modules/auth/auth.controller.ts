@@ -5,6 +5,52 @@ import { asyncHandler } from "../../middlewares/asyncHandler";
 import { prisma } from "../../lib/prisma";
 import { ApiError } from "../../utils/ApiError";
 
+
+const rewriteSetCookieForCrossSite = (cookie: string): string => {
+  // Ensure auth cookies can be set from a cross-site XHR/fetch (frontend <> backend different domains)
+  // Chrome requires SameSite=None + Secure for third-party contexts.
+  let c = cookie;
+
+  // Normalize SameSite to None
+  c = c.replace(/;\s*SameSite=(Lax|Strict)/gi, "; SameSite=None");
+
+  // Ensure Secure is present
+  if (!/;\s*Secure\b/i.test(c)) {
+    c += "; Secure";
+  }
+
+  return c;
+};
+
+const pipeBetterAuthResponse = async (response: Response, res: Response) => {
+  // status
+  res.status(response.status);
+
+  // handle Set-Cookie properly (can be multiple cookies)
+  const hdrs: any = response.headers as any;
+  const setCookies: string[] =
+    typeof hdrs.getSetCookie === "function"
+      ? hdrs.getSetCookie()
+      : (() => {
+          const sc = response.headers.get("set-cookie");
+          return sc ? [sc] : [];
+        })();
+
+  if (setCookies.length) {
+    res.setHeader("Set-Cookie", setCookies.map(rewriteSetCookieForCrossSite));
+  }
+
+  // pass through other headers (excluding set-cookie which we handled)
+  response.headers.forEach((v, k) => {
+    if (k.toLowerCase() === "set-cookie") return;
+    res.setHeader(k, v);
+  });
+
+  // body
+  const text = await response.text();
+  res.send(text ? JSON.parse(text) : null);
+};
+
 export const AuthController = {
   register: asyncHandler(async (req: Request, res: Response) => {
     const { name, email, password, role } = req.body;
@@ -21,34 +67,20 @@ export const AuthController = {
       // Return a Response so cookies/headers (if any) are preserved
       asResponse: true,
     });
-
-    // Pipe the better-auth response to Express
-    const text = await data.text();
-    res.status(data.status);
-    data.headers.forEach((v, k) => res.setHeader(k, v));
-    res.send(text ? JSON.parse(text) : null);
-  }),
+    await pipeBetterAuthResponse(data as any, res);
+}),
 
   login: asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
-    const u = await prisma.user.findUnique({ where: { email } });
-    if (u?.isBanned) throw new ApiError(403, "Your account is banned");
-
-    // Prevent banned users from creating a new session
     const user = await prisma.user.findUnique({ where: { email } });
     if (user?.isBanned) throw new ApiError(403, "Your account is banned");
-
-    const response = await auth.api.signInEmail({
+const response = await auth.api.signInEmail({
       body: { email, password },
       asResponse: true,
     });
-
-    const text = await response.text();
-    res.status(response.status);
-    response.headers.forEach((v, k) => res.setHeader(k, v));
-    res.send(text ? JSON.parse(text) : null);
-  }),
+    await pipeBetterAuthResponse(response as any, res);
+}),
 
   logout: asyncHandler(async (req: Request, res: Response) => {
     // End the current session (if any) and clear cookies
@@ -56,12 +88,8 @@ export const AuthController = {
       headers: fromNodeHeaders(req.headers),
       asResponse: true,
     } as any);
-
-    const text = await response.text();
-    res.status(response.status);
-    response.headers.forEach((v, k) => res.setHeader(k, v));
-    res.send(text ? JSON.parse(text) : null);
-  }),
+    await pipeBetterAuthResponse(response as any, res);
+}),
 
 
   google: asyncHandler(async (req: Request, res: Response) => {
